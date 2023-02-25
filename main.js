@@ -29,16 +29,94 @@ class GameCell {
     }
   }
 }
+
+class Controls {
+  touch = { lastX: null, lastY: null, timeout: null }
+  game = null
+  constructor(game) {
+    this.game = game
+    this.setEvents()
+  }
+
+  clickHandler(e, trusted = false) {
+    const target = e.target
+    const cell = target.closest('.cell')
+    const btnRestart = target.closest('.btn-restart')
+    const btnSize = target.closest('.btn-size')
+    if (cell) {
+      if (!trusted && ('ontouchstart' in window || navigator.maxTouchPoints))
+        return
+      const { x, y } = cell.dataset
+      this.game.cellClick(+x, +y)
+    }
+    if (btnRestart) {
+      this.game.restart()
+    }
+    if (btnSize) {
+      this.game.changeGridSize(+btnSize.dataset.size)
+    }
+  }
+  rightClickHandler(e) {
+    e.preventDefault()
+    const target = e.target
+    const cell = target.closest('.cell')
+    if (cell) {
+      const { x, y } = cell.dataset
+      this.game.toggleFlag(+x, +y)
+    }
+  }
+  touchHandler(e) {
+    this.touch.lastX = e.touches[0].clientX
+    this.touch.lastY = e.touches[0].clientY
+    if (e.touches.length > 1) return
+    this.touch.timeout = setTimeout(() => {
+      clearTimeout(this.touch.timeout)
+      this.touch.timeout = null
+      this.rightClickHandler(e)
+    }, 200)
+  }
+  touchEndHandler(e) {
+    if (this.touch.timeout) {
+      clearTimeout(this.touch.timeout)
+      this.touch.timeout = null
+      this.clickHandler(e, true)
+      return
+    }
+    this.touch.timeout = null
+  }
+  touchMoveHandler(e) {
+    const deltaX = Math.abs(this.touch.lastX - e.touches[0].clientX)
+    const deltaY = Math.abs(this.touch.lastY - e.touches[0].clientY)
+    if (deltaX + deltaY > 3 || e.touches.length > 1) {
+      clearTimeout(this.touch.timeout)
+      this.touch.timeout = null
+    }
+  }
+
+  setEvents() {
+    document.addEventListener('click', this.clickHandler.bind(this))
+    if ('ontouchstart' in window || navigator.maxTouchPoints) {
+      document.addEventListener('touchstart', this.touchHandler.bind(this))
+      document.addEventListener('touchend', this.touchEndHandler.bind(this))
+      document.addEventListener('touchmove', this.touchMoveHandler.bind(this))
+    } else {
+      this.game.htmlElem.addEventListener(
+        'contextmenu',
+        this.rightClickHandler.bind(this)
+      )
+    }
+  }
+
+}
 class Game {
   htmlElem
   gridSize
   gameArray
+  controls
   bobmPercentage = 0.2
   firstClick = true
   isGameOver = false
-  touchTimeout = null
   lastChange = { x: null, y: null }
-  touch = { lastX: null, lastY: null }
 
   constructor(selector = '.game', gridSize = 15) {
     this.htmlElem = document.querySelector(selector)
@@ -49,7 +127,7 @@ class Game {
   init() {
     this.createArray()
     this.renderArray()
-    this.setEvents()
+    this.controls = new Controls(this)
   }
 
   restart() {
@@ -175,6 +253,9 @@ class Game {
   }
 
   cellClick(x, y) {
+    this.lastChange.x = +x
+    this.lastChange.y = +y
+
     const cell = this.getCell(x, y)
 
     if (this.firstClick) {
@@ -201,85 +282,18 @@ class Game {
   }
 
   toggleFlag(x, y) {
+    this.lastChange.x = +x
+    this.lastChange.y = +y
+    
     const cell = this.getCell(x, y)
     if (cell.isShowed) return
     cell.isFlag = !cell.isFlag
     this.renderArray()
   }
 
-
-  clickHandler(e, trusted = false) {
-    const target = e.target
-    const cell = target.closest('.cell')
-    const btnRestart = target.closest('.btn-restart')
-    const btnSize = target.closest('.btn-size')
-    if (cell) {
-      if (!trusted && ('ontouchstart' in window || navigator.maxTouchPoints))
-        return
-      const { x, y } = cell.dataset
-      this.lastChange.x = +x
-      this.lastChange.y = +y
-      this.cellClick(+x, +y)
-    }
-    if (btnRestart) {
-      this.restart()
-    }
-    if (btnSize) {
-      this.gridSize = +btnSize.dataset.size
-      this.restart()
-    }
-  }
-  rightClickHandler(e) {
-    e.preventDefault()
-    const target = e.target
-    const cell = target.closest('.cell')
-    if (cell) {
-      const { x, y } = cell.dataset
-      this.lastChange.x = +x
-      this.lastChange.y = +y
-      this.toggleFlag(+x, +y)
-    }
-  }
-  touchHandler(e) {
-    this.touch.lastX = e.touches[0].clientX
-    this.touch.lastY = e.touches[0].clientY
-    if (e.touches.length > 1) return
-    this.touchTimeout = setTimeout(() => {
-      clearTimeout(this.touchTimeout)
-      this.touchTimeout = null
-      this.rightClickHandler(e)
-    }, 200)
-  }
-  touchEndHandler(e) {
-    if (this.touchTimeout) {
-      clearTimeout(this.touchTimeout)
-      this.touchTimeout = null
-      this.clickHandler(e, true)
-      return
-    }
-    this.touchTimeout = null
-  }
-  touchMoveHandler(e) {
-    const deltaX = Math.abs(this.touch.lastX - e.touches[0].clientX)
-    const deltaY = Math.abs(this.touch.lastY - e.touches[0].clientY)
-    if (deltaX + deltaY > 3 || e.touches.length > 1) {
-      clearTimeout(this.touchTimeout)
-      this.touchTimeout = null
-    }
-  }
-
-  setEvents() {
-    document.addEventListener('click', this.clickHandler.bind(this))
-    if ('ontouchstart' in window || navigator.maxTouchPoints) {
-      document.addEventListener('touchstart', this.touchHandler.bind(this))
-      document.addEventListener('touchend', this.touchEndHandler.bind(this))
-      document.addEventListener('touchmove', this.touchMoveHandler.bind(this))
-    } else {
-      this.htmlElem.addEventListener(
-        'contextmenu',
-        this.rightClickHandler.bind(this)
-      )
-    }
+  changeGridSize(size) {
+    this.gridSize = size
+    this.restart()
   }
 }
 
