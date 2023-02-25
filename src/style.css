@@ -37,7 +37,7 @@ header {
   gap: 20px;
 }
 
-.start-btn {
+.main-btn {
   position: fixed;
   top: 50%;
   left: 50%;
@@ -45,7 +45,8 @@ header {
   width: 300px;
   height: 100px;
   background: rgb(103, 215, 84);
-  box-shadow: 0px 5px 0 0px rgb(207, 166, 100);
+  box-shadow: 0px 5px 0 0px rgb(207 166 100), 0px 5px 12px 7px rgb(0 0 0 / 19%);
+  z-index: 10;
   display: flex;
   cursor: pointer;
   justify-content: center;
@@ -56,7 +57,7 @@ header {
   font-family: sans-serif;
   transition: 0.4s ease;
 }
-.start-screen:hover {
+.main-btn:hover {
   transform: translate(-50%, calc(-50% + 5px));
   box-shadow: 0px 0px 0 0px rgb(207, 166, 100);
   background: rgb(128, 222, 111);

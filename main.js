@@ -4,6 +4,47 @@ const EMPTY = 'EMPTY'
 const BOMB = 'BOMB'
 const FLAG = 'FLAG'
 
+
+class InformationButton {
+  text
+  className
+  isHidden
+  html
+  constructor({ text='', className='', isHidden=false }) {
+    this.text = text
+    this.className = className
+    this.isHidden = isHidden
+    this.addToDocument()
+  }
+  layout() {
+    const element = document.createElement('div')
+    element.innerHTML = this.text
+    element.classList = `main-btn ${ this.className }`
+    if (this.isHidden) {
+      element.style.display = 'none'
+      element.style.opacity = '0'
+    }
+    return element
+  }
+  addToDocument() {
+    this.html = this.layout()
+    document.body.append(this.html)
+  }
+  hide() {
+    this.html.style.opacity = 0
+    setTimeout(() => {
+      this.html.style.display = 'none'
+    }, 400)
+    this.isHidden = true
+  }
+  show() {
+    this.html.style.display = 'flex'
+    setTimeout(() => {
+      this.html.style.opacity = 1
+    }, 0)
+    this.isHidden = false
+  }
+}
 class GameCell {
   state = ''
   showed = false
@@ -44,20 +85,25 @@ class Controls {
     const btnRestart = target.closest('.btn-restart')
     const btnSize = target.closest('.btn-size')
     const btnStart = target.closest('.start-btn')
+    const gameOver = target.closest('.game-over')
+    const win = target.closest('.win')
     if (cell) {
       if (!trusted && ('ontouchstart' in window || navigator.maxTouchPoints))
         return
       const { x, y } = cell.dataset
       this.game.cellClick(+x, +y)
     }
-    if (btnRestart) {
+    if (btnRestart || gameOver || win) {
       this.game.restart()
+      return
     }
     if (btnSize) {
       this.game.changeGridSize(+btnSize.dataset.size)
+      return
     }
     if (btnStart) {
       this.game.startGame()
+      return
     }
   }
   rightClickHandler(e) {
@@ -122,6 +168,7 @@ class Game {
   firstClick = true
   isGameOver = false
   lastChange = { x: null, y: null }
+  layout = {}
 
   constructor(selector = '.game', startBtn = '.start-btn', gridSize = 15) {
     this.htmlElem = document.querySelector(selector)
@@ -133,9 +180,18 @@ class Game {
   init() {
     this.createArray()
     this.controls = new Controls(this)
+    this.makeLayout()
+  }
+
+  makeLayout() {
+    this.layout.btnStart = new InformationButton({ text: 'start', className: 'start-btn' })
+    this.layout.btnGameOver = new InformationButton({ text: 'game over', className: 'game-over', isHidden: true })
+    this.layout.btnWin = new InformationButton({ text: 'solved!', className: 'win', isHidden: true })
   }
 
   restart() {
+    this.layout.btnGameOver.hide()
+    this.layout.btnWin.hide()
     this.htmlElem.style.setProperty('--cels', this.gridSize)
     this.firstClick = true
     this.isGameOver = false
@@ -164,9 +220,11 @@ class Game {
 
   renderArray() {
     let newHTML = ''
-
+    let isWin = true
     this.gameArray.forEach((row, x) => {
       row.forEach((cell, y) => {
+        if (cell.state === BOMB && !cell.isFlag || cell.state === EMPTY && cell.isFlag) isWin = false
+
         let baseType = EMPTY
 
         if (cell.state === EMPTY) {
@@ -190,6 +248,11 @@ class Game {
     })
 
     this.htmlElem.innerHTML = newHTML
+
+    if (isWin) {
+      this.isGameOver = true
+      this.layout.btnWin.show()
+    }
   }
 
   createArray() {
@@ -252,6 +315,7 @@ class Game {
   }
 
   cellClick(x, y) {
+    if (this.isGameOver) return
     this.lastChange.x = +x
     this.lastChange.y = +y
 
@@ -275,12 +339,13 @@ class Game {
     }
     if (cell.state === BOMB) {
       this.isGameOver = true
-      // game over/restart logic
+      this.layout.btnGameOver.show()
     }
     this.renderArray()
   }
 
   toggleFlag(x, y) {
+    if (this.isGameOver) return
     this.lastChange.x = +x
     this.lastChange.y = +y
     
@@ -298,10 +363,7 @@ class Game {
   startGame() {
     this.renderArray()
     this.htmlElem.style.opacity = 1
-    this.startBtn.style.opacity = 0
-    setTimeout(() => {
-      this.startBtn.style.display = 'none'
-    }, 400)
+    this.layout.btnStart.hide()
   }
 }
 
