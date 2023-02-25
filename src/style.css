@@ -37,6 +37,31 @@ header {
   gap: 20px;
 }
 
+.start-btn {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 300px;
+  height: 100px;
+  background: rgb(103, 215, 84);
+  box-shadow: 0px 5px 0 0px rgb(207, 166, 100);
+  display: flex;
+  cursor: pointer;
+  justify-content: center;
+  align-items: center;
+  font-size: 40px;
+  text-transform: uppercase;
+  font-weight: 600;
+  font-family: sans-serif;
+  transition: 0.4s ease;
+}
+.start-screen:hover {
+  transform: translate(-50%, calc(-50% + 5px));
+  box-shadow: 0px 0px 0 0px rgb(207, 166, 100);
+  background: rgb(128, 222, 111);
+}
+
 .btn {
   background: transparent;
   border: none;
@@ -60,11 +85,12 @@ header {
   aspect-ratio: 1 / 1;
   width: min(100vw, 100vh);
   height: min(100vw, 100vh);
-  background: #000;
   display: grid;
   grid-template-columns: repeat(var(--cels), 1fr);
   grid-template-rows: repeat(var(--cels), 1fr);
   gap: 0px;
+  transition: 1s ease;
+  opacity: 0;
 }
 
 .cell {
@@ -72,7 +98,7 @@ header {
   background: rgb(103, 215, 84);
 }
 
-.cell-EMPTY:nth-child(2n) {
+.cell:not(.cell-SHOWED):nth-child(2n) {
   background: rgb(128, 222, 111);
 }
 .cell:hover {

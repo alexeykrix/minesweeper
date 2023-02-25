@@ -43,6 +43,7 @@ class Controls {
     const cell = target.closest('.cell')
     const btnRestart = target.closest('.btn-restart')
     const btnSize = target.closest('.btn-size')
+    const btnStart = target.closest('.start-btn')
     if (cell) {
       if (!trusted && ('ontouchstart' in window || navigator.maxTouchPoints))
         return
@@ -54,6 +55,9 @@ class Controls {
     }
     if (btnSize) {
       this.game.changeGridSize(+btnSize.dataset.size)
+    }
+    if (btnStart) {
+      this.game.startGame()
     }
   }
   rightClickHandler(e) {
@@ -110,6 +114,7 @@ class Controls {
 }
 class Game {
   htmlElem
+  startBtn
   gridSize
   gameArray
   controls
@@ -118,15 +123,15 @@ class Game {
   isGameOver = false
   lastChange = { x: null, y: null }
 
-  constructor(selector = '.game', gridSize = 15) {
+  constructor(selector = '.game', startBtn = '.start-btn', gridSize = 15) {
     this.htmlElem = document.querySelector(selector)
+    this.startBtn = document.querySelector(startBtn)
     this.gridSize = gridSize
     this.htmlElem.style.setProperty('--cels', gridSize)
   }
 
   init() {
     this.createArray()
-    this.renderArray()
     this.controls = new Controls(this)
   }
 
@@ -178,15 +183,9 @@ class Game {
           if (cell.state === BOMB && this.isGameOver) baseType = BOMB
         }
 
-        const animate =
-          this.lastChange.x === x && this.lastChange.y === y ? 'animate' : ''
-        newHTML += `
-        <div class="cell 
-          ${cell.showed ? 'cell-SHOWED' : ''} 
-          cell-${baseType} 
-          ${animate}" 
-          data-x="${x}" data-y="${y}"
-        ></div>`
+        const cellShowed = cell.showed ? 'cell-SHOWED' : ''
+        const animate = this.lastChange.x === x && this.lastChange.y === y ? 'animate' : ''
+        newHTML += `<div class="cell ${cellShowed} cell-${baseType} ${animate}" data-x="${x}" data-y="${y}"></div>`
       })
     })
 
@@ -294,6 +293,15 @@ class Game {
   changeGridSize(size) {
     this.gridSize = size
     this.restart()
+  }
+
+  startGame() {
+    this.renderArray()
+    this.htmlElem.style.opacity = 1
+    this.startBtn.style.opacity = 0
+    setTimeout(() => {
+      this.startBtn.style.display = 'none'
+    }, 400)
   }
 }
 
