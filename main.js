@@ -29,7 +29,6 @@ class GameCell {
     }
   }
 }
-
 class Game {
   htmlElem
   gridSize
@@ -130,7 +129,7 @@ class Game {
     this.gameArray = gameArray
   }
 
-  handleEmptyClick(cell, x, y) {
+  emptyClick(cell, x, y) {
     cell.showed = true
 
     if (this.countBombsAround(x, y) === 0) {
@@ -175,7 +174,7 @@ class Game {
     }
   }
 
-  handleCellClick(x, y) {
+  cellClick(x, y) {
     const cell = this.getCell(x, y)
 
     if (this.firstClick) {
@@ -192,7 +191,7 @@ class Game {
     }
 
     if (cell.state === EMPTY) {
-      this.handleEmptyClick(cell, x, y)
+      this.emptyClick(cell, x, y)
     }
     if (cell.state === BOMB) {
       this.isGameOver = true
@@ -208,6 +207,7 @@ class Game {
     this.renderArray()
   }
 
+
   clickHandler(e, trusted = false) {
     const target = e.target
     const cell = target.closest('.cell')
@@ -219,7 +219,7 @@ class Game {
       const { x, y } = cell.dataset
       this.lastChange.x = +x
       this.lastChange.y = +y
-      this.handleCellClick(+x, +y)
+      this.cellClick(+x, +y)
     }
     if (btnRestart) {
       this.restart()
@@ -240,8 +240,7 @@ class Game {
       this.toggleFlag(+x, +y)
     }
   }
-
-  handleTouch(e) {
+  touchHandler(e) {
     this.touch.lastX = e.touches[0].clientX
     this.touch.lastY = e.touches[0].clientY
     if (e.touches.length > 1) return
@@ -251,7 +250,7 @@ class Game {
       this.rightClickHandler(e)
     }, 200)
   }
-  handleTouchend(e) {
+  touchEndHandler(e) {
     if (this.touchTimeout) {
       clearTimeout(this.touchTimeout)
       this.touchTimeout = null
@@ -260,7 +259,7 @@ class Game {
     }
     this.touchTimeout = null
   }
-  handleTouchmove(e) {
+  touchMoveHandler(e) {
     const deltaX = Math.abs(this.touch.lastX - e.touches[0].clientX)
     const deltaY = Math.abs(this.touch.lastY - e.touches[0].clientY)
     if (deltaX + deltaY > 3 || e.touches.length > 1) {
@@ -272,9 +271,9 @@ class Game {
   setEvents() {
     document.addEventListener('click', this.clickHandler.bind(this))
     if ('ontouchstart' in window || navigator.maxTouchPoints) {
-      document.addEventListener('touchstart', this.handleTouch.bind(this))
-      document.addEventListener('touchend', this.handleTouchend.bind(this))
-      document.addEventListener('touchmove', this.handleTouchmove.bind(this))
+      document.addEventListener('touchstart', this.touchHandler.bind(this))
+      document.addEventListener('touchend', this.touchEndHandler.bind(this))
+      document.addEventListener('touchmove', this.touchMoveHandler.bind(this))
     } else {
       this.htmlElem.addEventListener(
         'contextmenu',
